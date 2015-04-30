@@ -1,0 +1,126 @@
+<html>
+<head>
+<title>So glad this is almost over</title>
+</head>
+
+<body onload="initial_call()">
+
+<h1>Paradigm's Assignment 8
+<br>
+<table>
+<tr>
+	<td width="300px">
+	<h4>Folders
+	</td>
+	<td width ="300px">
+	<h4>Files
+	</td>
+</tr>
+<tr>
+	<td width="300px">
+	<select id="folder_list" size="15" style="width: 250px" ondblclick="update_list(this.value)">
+	</td>
+	<td width="300px">
+	<select id="file_list" size="15" style="width: 250px">
+	</td>
+</tr>
+</table>
+<br>
+<form>
+<button type="button" onclick="dosomething()">Button button</button>
+</form>
+
+<script type="text/javascript">
+
+  var old_dir;
+
+function dosomething() {
+  var sendable = "dummy";
+  var sendable2 = JSON.parse(sendable);
+  httpPost("testend.php", sendable, cj);
+}
+
+function cj(response) {
+  var responding = JSON.parse(response);
+  var messy = responding.mess;
+  alert(messy);
+}
+
+function httpPost(url, payload, callback) {
+  var request = new XMLHttpRequest();
+  request.onreadystatechange = function() {
+    if(request.readyState == 4) {
+      if(request.status == 200)
+        callback(request.responseText);
+      else
+      {
+        if(request.status == 0 && request.statusText.length == 0)
+          alert("Request blocked by same-origin policy");
+        else
+          alert("Server returned status " + request.status +
+            ", " + request.statusText);
+      }
+    }
+  }
+  request.open('post', url, true);
+  request.setRequestHeader('Content-Type', 'application/json');
+  request.send(payload);
+}
+
+function cb(response) {
+  //alert("The back end server replied: " + response);
+  
+  var response_content = JSON.parse(response);
+  //alert(response_content.dir2);
+  old_dir = response_content.loc;
+  //alert(old_dir);
+  var folder_list = document.getElementById("folder_list");
+  var response_folder = response_content.dir;
+  var up_folder = document.createElement("option");
+  up_folder.text = "..";
+  folder_list.add(up_folder);
+  for (var i in response_folder) {
+    var new_option = document.createElement("option");
+    var temp = response_folder[i];
+    temp = temp.split("/").pop();
+    new_option.text = temp;
+    folder_list.add(new_option);
+  }
+
+  var file_list = document.getElementById("file_list");
+  var response_file = response_content.files;
+  for (var i in response_file) {
+    var new_option = document.createElement("option");
+    var temp = response_file[i];
+    temp = temp.split("/").pop();
+    new_option.text = temp;
+    file_list.add(new_option);
+  }
+}
+
+function update_list(change_dir) {
+  // loops to remove elements in lists
+  var folders = document.getElementById("folder_list");
+  var files = document.getElementById("file_list");
+  var len = folders.size;
+  for (var i = 0; i < len; i++) {
+    folders.remove(0);
+  }
+  len = files.size;
+  for (var i = 0; i < len; i++) {
+    files.remove(0);
+  }
+  // end removal loop
+
+  //alert(old_dir + "/" + change_dir);
+  var outgoing_JSON = old_dir + "/" + change_dir;
+  httpPost("backend.php", outgoing_JSON, cb);  
+}
+
+function initial_call() {
+  httpPost("backend.php", null, cb);
+}
+
+</script>
+</body>
+</html>
